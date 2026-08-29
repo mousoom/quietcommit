@@ -17,7 +17,10 @@ function qc(cwd, env, ...args) {
   return execFileSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
-    env: { ...process.env, ...env },
+    // FORCE_COLOR=0 wins over an inherited FORCE_COLOR=1; NO_COLOR is the
+    // fallback. Keeps CLI output plain so assertions match regardless of the
+    // dev's shell color settings.
+    env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1', ...env },
   });
 }
 

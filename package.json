@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans, no approval required by default, no API key for the common case.",
   "license": "MIT",
-  "author": "quietcommit build <mousoom.personal@gmail.com>",
+  "author": "Mousoom <mousoom.personal@gmail.com>",
   "type": "commonjs",
   "bin": {
     "quietcommit": "bin/quietcommit.js"

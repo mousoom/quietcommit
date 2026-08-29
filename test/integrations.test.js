@@ -27,7 +27,11 @@ function mkrepo() {
   return dir;
 }
 function qc(cwd, ...args) {
-  return execFileSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
+  return execFileSync(process.execPath, [CLI, ...args], {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
+  });
 }
 
 // --- generated files carry the real repo URL --------------------------
