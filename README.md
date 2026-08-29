@@ -3,7 +3,7 @@
 [![ci](https://github.com/mousoom/quietcommit/actions/workflows/ci.yml/badge.svg)](https://github.com/mousoom/quietcommit/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/quietcommit.svg)](https://www.npmjs.com/package/quietcommit)
 [![node](https://img.shields.io/node/v/quietcommit.svg)](https://www.npmjs.com/package/quietcommit)
-[![license](https://img.shields.io/npm/l/quietcommit.svg)](LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans,
 with no required approval and no API key for the common case.
