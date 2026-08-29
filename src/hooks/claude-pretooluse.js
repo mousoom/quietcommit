@@ -19,6 +19,19 @@ function unquote(s) {
 }
 
 /**
+ * POSIX-safe single-quote wrapping for a value we print inside a
+ * ready-to-paste `git commit -m ...` command. Single quotes suppress all
+ * shell interpretation (`$`, backticks, backslashes), so a drafted title
+ * containing e.g. a filename with backticks can't turn into a command
+ * substitution when the suggestion is pasted. Embedded single quotes are
+ * closed, escaped, and reopened the standard way. Newlines survive
+ * literally inside single quotes, which is fine for a multi-line body.
+ */
+function shellSingleQuote(value) {
+  return `'${String(value).replace(/'/g, "'\\''")}'`;
+}
+
+/**
  * Best-effort extraction of `-m`/`--message` values from a shell command
  * string. This is not a full shell parser — it's a pragmatic regex approach
  * that covers the overwhelming majority of real `git commit` invocations an
@@ -72,7 +85,7 @@ async function evaluateBashCall({ command, cwd, config }) {
       permissionDecision: 'deny',
       permissionDecisionReason:
         `quietcommit: "git commit" needs a -m message in a non-interactive context. ` +
-        `Retry with:\n\ngit commit -m ${JSON.stringify(suggestion)}\n\n` +
+        `Retry with:\n\ngit commit -m ${shellSingleQuote(suggestion)}\n\n` +
         `(edit the drafted message above if it doesn't capture the change well — you have the ` +
         `full task context quietcommit doesn't).`,
     };
@@ -108,7 +121,7 @@ async function evaluateBashCall({ command, cwd, config }) {
       '',
       `Retry with a properly-formatted message, e.g.:`,
       '',
-      `git commit -m ${JSON.stringify(suggestion)}`,
+      `git commit -m ${shellSingleQuote(suggestion)}`,
       '',
       `(you have full task context — feel free to write a better title/body than the draft above, ` +
       `just keep the "type(scope): title" structure).`
@@ -178,4 +191,4 @@ async function main() {
   process.exit(0);
 }
 
-module.exports = { evaluateBashCall, extractMessage, GIT_COMMIT_RE, main };
+module.exports = { evaluateBashCall, extractMessage, shellSingleQuote, GIT_COMMIT_RE, main };

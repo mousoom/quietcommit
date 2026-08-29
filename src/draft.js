@@ -48,7 +48,7 @@ function ruleBasedDraft({ cwd, config } = {}) {
     throw new Error('nothing staged — stage changes first (git add ...)');
   }
   const branch = git.currentBranch(cwd);
-  const type = inferType(files);
+  const type = inferType(files, branch, config && config.allowedTypes);
   const scope = inferScope(files);
   const refs = inferTicket(branch, config && config.ticketPattern);
 

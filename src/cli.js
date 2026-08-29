@@ -4,15 +4,17 @@ const { Command } = require('commander');
 const chalk = require('chalk');
 const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 
 const git = require('./git');
-const { loadConfig, writeConfig, CONFIG_FILENAME } = require('./config');
+const { loadConfig, writeConfig, CONFIG_FILENAME, envFlag } = require('./config');
 const draft = require('./draft');
 const hookInstall = require('./hooks/install');
 const hookRun = require('./hooks/run');
 const claudePreToolUse = require('./hooks/claude-pretooluse');
 const claudeCode = require('./integrations/claude-code');
 const agentsMd = require('./integrations/agents-md');
+const editorRules = require('./integrations/editor-rules');
 const pkg = require('../package.json');
 
 function fail(message) {
@@ -94,9 +96,11 @@ function buildProgram() {
     .command('install')
     .description('Install quietcommit git hooks (and optionally the Claude Code / AGENTS.md integrations).')
     .option('--global', 'install hooks globally (core.hooksPath) instead of per-repo')
-    .option('--claude-code', 'also register the Claude Code PreToolUse integration')
+    .option('--claude-code', 'also register the Claude Code PreToolUse hook + /quietcommit skill')
     .option('--agents-md', 'also write/update AGENTS.md with the commit convention')
-    .option('--all', 'install hooks + Claude Code integration + AGENTS.md')
+    .option('--cursor', 'also write/update .cursor/rules/quietcommit.mdc')
+    .option('--copilot', 'also write/update .github/copilot-instructions.md')
+    .option('--all', 'install hooks + every agent integration (Claude Code, AGENTS.md, Cursor, Copilot)')
     .action((opts) => {
       const cwd = process.cwd();
 
@@ -114,8 +118,9 @@ function buildProgram() {
 
         if (opts.claudeCode || opts.all) {
           const root = repoRootOrCwd(cwd);
-          const { settingsPath } = claudeCode.installClaudeCode(root);
+          const { settingsPath, skillPath } = claudeCode.installClaudeCode(root);
           process.stdout.write(chalk.green(`Registered Claude Code PreToolUse hook in ${settingsPath}\n`));
+          if (skillPath) process.stdout.write(chalk.green(`Installed /quietcommit skill: ${skillPath}\n`));
         }
 
         if (opts.agentsMd || opts.all) {
@@ -123,6 +128,20 @@ function buildProgram() {
           const config = loadConfig({ repoRoot: root });
           const { filePath, action } = agentsMd.installAgentsMd(root, config);
           process.stdout.write(chalk.green(`AGENTS.md ${action}: ${filePath}\n`));
+        }
+
+        if (opts.cursor || opts.all) {
+          const root = repoRootOrCwd(cwd);
+          const config = loadConfig({ repoRoot: root });
+          const { filePath, action } = editorRules.installCursor(root, config);
+          process.stdout.write(chalk.green(`Cursor rule ${action}: ${filePath}\n`));
+        }
+
+        if (opts.copilot || opts.all) {
+          const root = repoRootOrCwd(cwd);
+          const config = loadConfig({ repoRoot: root });
+          const { filePath, action } = editorRules.installCopilot(root, config);
+          process.stdout.write(chalk.green(`Copilot instructions ${action}: ${filePath}\n`));
         }
 
         if (!fs.existsSync(path.join(repoRootOrCwd(cwd), CONFIG_FILENAME)) && !opts.global) {
@@ -143,7 +162,9 @@ function buildProgram() {
     .option('--global', 'uninstall global hooks')
     .option('--claude-code', 'also remove the Claude Code integration')
     .option('--agents-md', 'also remove the AGENTS.md block')
-    .option('--all', 'remove hooks + Claude Code integration + AGENTS.md')
+    .option('--cursor', 'also remove the Cursor rule')
+    .option('--copilot', 'also remove the Copilot instructions block')
+    .option('--all', 'remove hooks + every agent integration')
     .action((opts) => {
       const cwd = process.cwd();
       try {
@@ -160,6 +181,16 @@ function buildProgram() {
           const root = repoRootOrCwd(cwd);
           const r = agentsMd.uninstallAgentsMd(root);
           process.stdout.write(chalk.green(`AGENTS.md: ${r.action}\n`));
+        }
+        if (opts.cursor || opts.all) {
+          const root = repoRootOrCwd(cwd);
+          const r = editorRules.uninstallCursor(root);
+          process.stdout.write(chalk.green(`Cursor rule: ${r.action}\n`));
+        }
+        if (opts.copilot || opts.all) {
+          const root = repoRootOrCwd(cwd);
+          const r = editorRules.uninstallCopilot(root);
+          process.stdout.write(chalk.green(`Copilot instructions: ${r.action}\n`));
         }
       } catch (err) {
         fail(err.message);
@@ -188,6 +219,86 @@ function buildProgram() {
       process.stdout.write(chalk.dim(`\nglobal: ${sources.globalPath}\nrepo:   ${sources.repoPath || '(not in a repo)'}\n`));
     });
 
+  // --- status ---
+  program
+    .command('status')
+    .description('Show what quietcommit has installed in this repo and the effective config.')
+    .action(() => {
+      const cwd = process.cwd();
+      const inRepo = git.isGitRepo(cwd);
+      const root = inRepo ? git.repoRoot(cwd) : cwd;
+      const lines = [chalk.bold('quietcommit status'), ''];
+
+      const disabled = envFlag('QUIETCOMMIT_DISABLE');
+      const strict = envFlag('QUIETCOMMIT_STRICT');
+      if (disabled) lines.push(chalk.yellow('  QUIETCOMMIT_DISABLE=1 — every hook is currently a no-op'));
+      if (strict) lines.push(chalk.yellow('  QUIETCOMMIT_STRICT=1 — approval mode is forced on'));
+      if (disabled || strict) lines.push('');
+
+      if (!inRepo) {
+        lines.push(chalk.dim('  not inside a git repository — hook status unavailable'));
+      } else {
+        lines.push(`  repo:      ${root}`);
+        let hooksDir;
+        try {
+          hooksDir = git.hooksPath(cwd);
+          lines.push(`  hooks dir: ${hooksDir}`);
+        } catch (err) {
+          lines.push(chalk.red(`  hooks dir: could not resolve (${err.message})`));
+        }
+        if (hooksDir) {
+          for (const name of hookInstall.HOOK_NAMES) {
+            const p = path.join(hooksDir, name);
+            const exists = fs.existsSync(p);
+            const managed = exists && hookInstall.isQuietcommitShim(p);
+            const chained = fs.existsSync(`${p}.quietcommit-original`);
+            const state = managed
+              ? chalk.green('installed') + (chained ? chalk.dim(' (chained onto a pre-existing hook)') : '')
+              : exists
+                ? chalk.yellow('present, not quietcommit-managed')
+                : chalk.dim('not installed');
+            lines.push(`    ${name}: ${state}`);
+          }
+        }
+
+        const globalHooksPath = git.configGet('core.hooksPath', { cwd: os.homedir() });
+        if (globalHooksPath) {
+          const isOurs = path.resolve(globalHooksPath) === path.resolve(hookInstall.GLOBAL_HOOKS_DIR);
+          lines.push(`  global core.hooksPath: ${globalHooksPath}${isOurs ? chalk.green(' (quietcommit)') : ''}`);
+        }
+
+        const cc = claudeCode.claudeCodeStatus(root);
+        lines.push(
+          `  Claude Code hook: ${cc.registered ? chalk.green('registered') : chalk.dim('not registered')}` +
+          (cc.registered && !cc.scriptExists ? chalk.red(' — script file missing') : '')
+        );
+        lines.push(`  /quietcommit skill: ${cc.skillInstalled ? chalk.green('installed') : chalk.dim('not installed')}`);
+
+        const am = agentsMd.agentsMdStatus(root);
+        lines.push(`  AGENTS.md block:  ${am.present ? chalk.green('present') : chalk.dim('absent')}`);
+
+        const cur = editorRules.cursorStatus(root);
+        lines.push(`  Cursor rule:      ${cur.present ? chalk.green('present') : chalk.dim('absent')}`);
+
+        const cop = editorRules.copilotStatus(root);
+        lines.push(`  Copilot block:    ${cop.present ? chalk.green('present') : chalk.dim('absent')}`);
+      }
+
+      lines.push('');
+      const config = loadConfig({ repoRoot: root });
+      lines.push(chalk.bold('  effective config'));
+      lines.push(`    requireApproval: ${config.requireApproval}`);
+      lines.push(`    allowedTypes:    ${config.allowedTypes.length} types`);
+      lines.push(`    ticketPattern:   ${config.ticketPattern}`);
+      lines.push(
+        `    headlessBackend: ${config.headlessBackend ? config.headlessBackend.provider : 'none (rule-based / agent only)'}`
+      );
+      lines.push(chalk.dim(`    global: ${config.sources.globalPath}`));
+      lines.push(chalk.dim(`    repo:   ${config.sources.repoPath || '(not in a repo)'}`));
+
+      process.stdout.write(lines.join('\n') + '\n');
+    });
+
   // --- hook-run (internal; called by the installed shims / Claude Code hook) ---
   program
     .command('hook-run <name> [args...]')
@@ -195,6 +306,15 @@ function buildProgram() {
     .allowUnknownOption(true)
     .action(async (name, args) => {
       const cwd = process.cwd();
+
+      // QUIETCOMMIT_DISABLE — behave as a transparent no-op for every hook
+      // entry point, so a commit proceeds exactly as if quietcommit weren't
+      // installed. Explicit `quietcommit` subcommands still work.
+      if (envFlag('QUIETCOMMIT_DISABLE')) {
+        process.exit(0);
+        return;
+      }
+
       const config = loadConfig({ repoRoot: repoRootOrCwd(cwd) });
 
       if (name === 'prepare-commit-msg') {

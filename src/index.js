@@ -18,5 +18,7 @@ module.exports = {
   integrations: {
     claudeCode: require('./integrations/claude-code'),
     agentsMd: require('./integrations/agents-md'),
+    editorRules: require('./integrations/editor-rules'),
+    convention: require('./integrations/convention'),
   },
 };

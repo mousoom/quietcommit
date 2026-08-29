@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 /**
@@ -98,12 +99,30 @@ function configGetAll(scope, cwd = process.cwd()) {
   return out;
 }
 
+/**
+ * Absolute path to the hooks directory git would actually execute from when
+ * `core.hooksPath` is NOT set. `git rev-parse --git-path hooks` accounts for
+ * linked worktrees (where the per-worktree git dir is `.git/worktrees/<name>`
+ * but hooks still run from the common git dir), which naive `<git-dir>/hooks`
+ * construction gets wrong.
+ */
+function commonHooksDir(cwd = process.cwd()) {
+  const abs = run(['rev-parse', '--path-format=absolute', '--git-path', 'hooks'], { cwd });
+  if (abs.status === 0 && abs.stdout.trim()) return abs.stdout.trim();
+  // Older git without --path-format: the value may be relative to cwd.
+  const rel = runOrThrow(['rev-parse', '--git-path', 'hooks'], { cwd });
+  return path.resolve(cwd, rel);
+}
+
 function hooksPath(cwd = process.cwd()) {
   // Resolve the effective hooks directory the way git itself would:
-  // core.hooksPath if set, otherwise <git-dir>/hooks.
+  // core.hooksPath if set (git resolves a relative value against the working
+  // tree root), otherwise the common git dir's hooks/.
   const configured = configGet('core.hooksPath', { cwd });
-  if (configured) return configured;
-  return `${gitDir(cwd)}/hooks`;
+  if (configured) {
+    return path.isAbsolute(configured) ? configured : path.resolve(repoRoot(cwd), configured);
+  }
+  return commonHooksDir(cwd);
 }
 
 module.exports = {
@@ -120,4 +139,5 @@ module.exports = {
   configGet,
   configGetAll,
   hooksPath,
+  commonHooksDir,
 };

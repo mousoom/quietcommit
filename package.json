@@ -3,22 +3,33 @@
   "version": "0.1.0",
   "description": "Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans, no approval required by default, no API key for the common case.",
   "license": "MIT",
+  "author": "quietcommit build <mousoom.personal@gmail.com>",
   "type": "commonjs",
   "bin": {
     "quietcommit": "bin/quietcommit.js"
   },
   "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mousoom/quietcommit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mousoom/quietcommit/issues"
+  },
+  "homepage": "https://github.com/mousoom/quietcommit#readme",
   "files": [
     "bin",
     "src",
+    "skills",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "prepublishOnly": "npm test"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
     "commander": "^12.1.0",

@@ -1,5 +1,10 @@
 # quietcommit
 
+[![ci](https://github.com/mousoom/quietcommit/actions/workflows/ci.yml/badge.svg)](https://github.com/mousoom/quietcommit/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/quietcommit.svg)](https://www.npmjs.com/package/quietcommit)
+[![node](https://img.shields.io/node/v/quietcommit.svg)](https://www.npmjs.com/package/quietcommit)
+[![license](https://img.shields.io/npm/l/quietcommit.svg)](LICENSE)
+
 Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans,
 with no required approval and no API key for the common case.
 
@@ -39,8 +44,10 @@ quietcommit intercepts commits through git's own hook chain — `prepare-commit-
      just being asked to structure it. **No separate API key, no extra billing** — it rides
      whatever session/subscription is already running the agent.
    - **No agent is present** (a human typing `git commit` in a bare terminal): quietcommit falls
-     back to a rule-based formatter — infers `type` from which files changed, `scope` from the
-     changed directory, and a ticket ID from the branch name. **No AI, no key, no network call**,
+     back to a rule-based formatter — infers `type` from an explicit branch prefix (`feat/…`,
+     `fix/…`) or, failing that, which files changed; `scope` from the changed directory; and a
+     ticket ID from the branch name (project keys `ENG-1234`, or bare issue numbers `1234`).
+     **No AI, no key, no network call**,
      and honestly, no drafted body — just structure. If you want an AI-drafted body here too, you
      have to opt in explicitly (see `headlessBackend` below) — either your own API key, sent to
      that provider's API and nowhere else, or a local Ollama model that never leaves your machine.
@@ -59,15 +66,19 @@ npm install -g quietcommit      # or add as a devDependency and let npx resolve 
 
 cd your-repo
 quietcommit install             # hooks for this repo only
-quietcommit install --claude-code   # + register the Claude Code PreToolUse hook
+quietcommit install --claude-code   # + Claude Code PreToolUse hook + /quietcommit skill
 quietcommit install --agents-md     # + write/update AGENTS.md for other agents
-quietcommit install --all           # all of the above
+quietcommit install --cursor        # + write/update .cursor/rules/quietcommit.mdc
+quietcommit install --copilot       # + write/update .github/copilot-instructions.md
+quietcommit install --all           # hooks + every agent integration above
 
 quietcommit install --global    # hooks for every repo on this machine (core.hooksPath)
 ```
 
 `quietcommit uninstall` (with the same flags) removes exactly what was installed and restores any
-hook that was already there before — nothing is left half-configured.
+hook that was already there before — nothing is left half-configured. Every agent-instruction file
+is edited through a marked `<!-- quietcommit:begin -->` … `<!-- quietcommit:end -->` block, so
+hand-written content in the same file is never touched.
 
 ## Use it directly
 
@@ -80,13 +91,23 @@ quietcommit --dry-run    # print the draft without committing
 quietcommit --review     # show the draft, then accept / edit / regenerate / abort
 ```
 
+`quietcommit status` prints what's installed in the current repo (git hooks, Claude Code hook and
+`/quietcommit` skill, `AGENTS.md` / Cursor / Copilot blocks), the effective config and which file
+each value came from, and whether either environment override below is active.
+
+See [`examples/`](examples/) for real staged diffs and the messages quietcommit drafts for them.
+
 ## How each platform gets the benefit
 
 - **Claude Code** (native, v1's flagship integration): a `PreToolUse` hook intercepts a raw
   `git commit` before it runs, and if the message doesn't meet the bar, denies it with the reason
   and a ready-to-use suggested command — Claude retries in the same turn, so it's still invisible
-  to you. Config: `.claude/settings.json` + `.claude/hooks/quietcommit-pretooluse.sh`.
-- **Everything else** (Cursor, Codex, Aider, OpenCode, and 20+ others per the
+  to you. Config: `.claude/settings.json` + `.claude/hooks/quietcommit-pretooluse.sh`. A
+  `.claude/skills/quietcommit/SKILL.md` is also installed so an agent can invoke drafting
+  deliberately (`/quietcommit`), not only react to the gate.
+- **Cursor / GitHub Copilot**: a marked block in `.cursor/rules/quietcommit.mdc` (always-applied)
+  or `.github/copilot-instructions.md` carries the same convention as an always-on instruction.
+- **Everything else** (Codex, Aider, OpenCode, and 20+ others per the
   [agents.md](https://agents.md) spec): an `AGENTS.md` block tells the agent the convention to
   follow. Less enforced than the Claude Code hook (it's an instruction, not a gate), but universal.
 - **A human, anywhere**: the git hooks apply regardless of what wrote the message.
@@ -110,6 +131,18 @@ Zero config needed to get the default behavior:
 
 `quietcommit config` prints the effective merged config. `quietcommit config --init` writes a
 starter file.
+
+### Environment overrides
+
+Two env vars change behavior without editing any rc file — handy for CI, scripts, or a one-off
+commit:
+
+- `QUIETCOMMIT_DISABLE=1` — every git hook becomes a transparent no-op; commits behave exactly as
+  if quietcommit weren't installed. Explicit `quietcommit` subcommands still work. (Unlike
+  `git commit --no-verify`, this doesn't also skip every *other* hook in the repo.)
+- `QUIETCOMMIT_STRICT=1` — forces `requireApproval` on for this invocation, regardless of config.
+
+Accepted truthy values: `1`, `true`, `yes`, `on` (case-insensitive).
 
 ### Approval mode (`requireApproval: true`)
 

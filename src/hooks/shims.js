@@ -1,5 +1,7 @@
 'use strict';
 
+const { REPO_URL } = require('../meta');
+
 // The marker line lets install/uninstall recognize a hook file as one we
 // manage, so re-running install is idempotent and uninstall can tell a
 // quietcommit shim apart from someone else's hook.
@@ -34,7 +36,7 @@ function chainOriginalBlock(hookName) {
 function prepareCommitMsgShim() {
   return `#!/bin/sh
 ${MARKER}
-# Installed by quietcommit — https://github.com/quietcommit/quietcommit
+# Installed by quietcommit — ${REPO_URL}
 # Do not edit by hand; run \`quietcommit uninstall\` to remove.
 
 ${chainOriginalBlock('prepare-commit-msg')}
@@ -47,7 +49,7 @@ exec "$QC" hook-run prepare-commit-msg "$1" "$2" "$3"
 function commitMsgShim() {
   return `#!/bin/sh
 ${MARKER}
-# Installed by quietcommit — https://github.com/quietcommit/quietcommit
+# Installed by quietcommit — ${REPO_URL}
 # Do not edit by hand; run \`quietcommit uninstall\` to remove.
 
 ${chainOriginalBlock('commit-msg')}

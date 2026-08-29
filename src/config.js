@@ -15,6 +15,15 @@ const DEFAULTS = {
   headlessBackend: null, // opt-in only, e.g. { provider: 'anthropic', apiKey: '...' } or { provider: 'ollama' }
 };
 
+/**
+ * Parse a boolean-ish environment variable. Truthy values: 1, true, yes, on
+ * (case-insensitive). Anything else — including unset — is false.
+ */
+function envFlag(name) {
+  const v = process.env[name];
+  return v != null && /^(1|true|yes|on)$/i.test(String(v).trim());
+}
+
 function readJsonIfExists(filePath) {
   if (!filePath || !fs.existsSync(filePath)) return null;
   try {
@@ -38,8 +47,13 @@ function loadConfig({ repoRoot } = {}) {
 
   const merged = { ...DEFAULTS, ...globalConfig, ...repoConfig };
 
+  // QUIETCOMMIT_STRICT forces approval mode on without touching any rc file —
+  // useful in CI, or for a one-off `git commit` you want gated.
+  const requireApproval = envFlag('QUIETCOMMIT_STRICT') ? true : Boolean(merged.requireApproval);
+
   return {
     ...merged,
+    requireApproval,
     ticketPattern: merged.ticketPattern || DEFAULT_TICKET_PATTERN,
     sources: { globalPath, repoPath },
   };
@@ -51,4 +65,4 @@ function writeConfig(targetPath, config) {
   fs.writeFileSync(targetPath, JSON.stringify(toWrite, null, 2) + '\n', 'utf8');
 }
 
-module.exports = { loadConfig, writeConfig, DEFAULTS, CONFIG_FILENAME };
+module.exports = { loadConfig, writeConfig, DEFAULTS, CONFIG_FILENAME, envFlag };
