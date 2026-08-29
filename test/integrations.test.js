@@ -137,7 +137,7 @@ test('Claude Code install copies the /quietcommit skill; uninstall removes it', 
   try {
     const r = claudeCode.installClaudeCode(dir);
     assert.ok(r.skillPath && fs.existsSync(r.skillPath));
-    assert.match(fs.readFileSync(r.skillPath, 'utf8'), /^---\nname: quietcommit/);
+    assert.match(fs.readFileSync(r.skillPath, 'utf8'), /^---\r?\nname: quietcommit/);
     assert.ok(claudeCode.claudeCodeStatus(dir).skillInstalled);
     assert.ok(claudeCode.claudeCodeStatus(dir).registered);
 

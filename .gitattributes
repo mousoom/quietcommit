@@ -1,0 +1,5 @@
+# Normalize line endings to LF on checkout everywhere (Windows included).
+# quietcommit ships shell hook shims and a skill file that must not carry CRLF.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf

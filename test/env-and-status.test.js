@@ -112,9 +112,12 @@ test('hooksPath resolves to the common hooks dir from inside a linked worktree',
     git(dir, 'worktree', 'add', '-q', wt, '-b', 'wtbranch');
 
     const gitmod = require('../src/git');
-    const resolved = fs.realpathSync(gitmod.hooksPath(wt));
+    // realpathSync.native expands Windows 8.3 short names (RUNNER~1) so the two
+    // paths compare equal; lower-case guards drive-letter / case differences.
+    const norm = (p) => fs.realpathSync.native(p).toLowerCase();
+    const resolved = norm(gitmod.hooksPath(wt));
 
-    assert.equal(resolved, fs.realpathSync(path.join(dir, '.git', 'hooks')));
+    assert.equal(resolved, norm(path.join(dir, '.git', 'hooks')));
     assert.ok(!resolved.includes('worktrees'), `unexpected per-worktree path: ${resolved}`);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
