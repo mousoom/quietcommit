@@ -1,0 +1,36 @@
+{
+  "name": "quietcommit",
+  "version": "0.1.0",
+  "description": "Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans, no approval required by default, no API key for the common case.",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "quietcommit": "bin/quietcommit.js"
+  },
+  "main": "src/index.js",
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "chalk": "^4.1.2",
+    "prompts": "^2.4.2"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "conventional-commits",
+    "ai",
+    "claude-code",
+    "git-hooks"
+  ]
+}
