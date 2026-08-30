@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a change or addition
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        quietcommit stays deliberately narrow. Check "What v1 doesn't do" in the README first —
+        adapters for more platforms, deep config, analytics, and history rewriting are out of
+        scope unless there's a strong case.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that quietcommit makes hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What would you add or change? How would it behave by default?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

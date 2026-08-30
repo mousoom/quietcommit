@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/mousoom/quietcommit/security/advisories/new
+    about: Report privately. Do not open a public issue for a suspected vulnerability.
+  - name: Question / discussion
+    url: https://github.com/mousoom/quietcommit/discussions
+    about: For usage questions and open-ended ideas.

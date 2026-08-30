@@ -1,0 +1,46 @@
+name: Bug report
+description: Something quietcommit did wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: run `quietcommit status` and check the effective config — a lot of
+        surprises come from `requireApproval`, `ticketPattern`, or an existing hook being chained.
+  - type: input
+    id: version
+    attributes:
+      label: quietcommit version
+      description: Output of `quietcommit --version`
+      placeholder: 0.1.2
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version + OS
+      placeholder: Node 22.5.0, macOS 15
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what quietcommit did, what you expected instead.
+      placeholder: |
+        Ran: git commit -m "fix: correct off-by-one"
+        Expected: message left alone
+        Got: message rewritten to "fix(src): update parser.js"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Exact commands from an empty git repo, if you can.
+      render: shell
+  - type: textarea
+    id: status
+    attributes:
+      label: "`quietcommit status` output"
+      render: text

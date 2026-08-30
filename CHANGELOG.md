@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- Contributor scaffolding: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue / PR templates,
+  Dependabot config. CI workflow pinned to least-privilege (`contents: read`).
+
 ## [0.1.2] - 2026-08-30
 
 ### Changed

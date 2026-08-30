@@ -5,6 +5,10 @@ on:
     branches: [main, master]
   pull_request:
 
+# Least privilege: CI only reads the repo. No token that could publish or write.
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:

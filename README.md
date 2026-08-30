@@ -177,6 +177,13 @@ existing history, and adapters for platforms beyond Claude Code + the universal 
 convention are all deliberately out of scope for v1 — see the PRD for the reasoning. Real feedback
 from real usage, not a feature checklist, decides what v2 covers.
 
+## Contributing
+
+Bug reports and focused PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the test
+and commit conventions, and scope. All participation is under the
+[Code of Conduct](CODE_OF_CONDUCT.md). Security issues: see [SECURITY.md](SECURITY.md) — report
+privately, not as a public issue.
+
 ## License
 
 MIT
