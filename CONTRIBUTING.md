@@ -69,6 +69,5 @@ publishes to npm via OIDC and cuts the GitHub Release. Contributors never need t
 
 ## Scope
 
-quietcommit deliberately stays narrow — see "What v1 doesn't do" in the README and the PRD.
-Adapters for more platforms, deep config, analytics, and history rewriting are out of scope unless
-discussed first.
+quietcommit deliberately stays narrow — see "What v1 doesn't do" in the README. Adapters for more
+platforms, deep config, analytics, and history rewriting are out of scope unless discussed first.
