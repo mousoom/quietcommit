@@ -113,7 +113,7 @@ See [`examples/`](examples/) for real staged diffs and the messages quietcommit 
 - **A human, anywhere**: the git hooks apply regardless of what wrote the message.
 
 An MCP server (`draft_commit`/`create_commit` tools, plus a cleaner approval UX via the host's own
-permission dialog) is planned but deliberately out of v1 — see the PRD.
+permission dialog) is planned but deliberately out of v1.
 
 ## Configuration
 
@@ -174,8 +174,18 @@ BREAKING CHANGE: <description>   (only if applicable)
 
 Diff-content hygiene (secret scanning), deep per-repo config, team/manager analytics, rewriting
 existing history, and adapters for platforms beyond Claude Code + the universal `AGENTS.md`
-convention are all deliberately out of scope for v1 — see the PRD for the reasoning. Real feedback
-from real usage, not a feature checklist, decides what v2 covers.
+convention are all deliberately out of scope for v1. Real feedback from real usage, not a feature
+checklist, decides what v2 covers.
+
+## Prior art
+
+- **[better-commits](https://github.com/everduin94/better-commits)** — an interactive TUI commit
+  builder. quietcommit's branch-name inference (ticket id, type, scope) is modelled on its
+  approach. If you want to be prompted through each field rather than have a silent hook, use
+  better-commits.
+- **[graphify](https://github.com/Graphify-Labs/graphify)** — a different tool, but its
+  three-surface install model (git hooks / agent instruction files / an MCP server) and its
+  `status` subcommand shaped how quietcommit installs and reports itself.
 
 ## Contributing
 
