@@ -74,11 +74,34 @@ Given a git diff, respond with ONLY a JSON object (no prose, no markdown fences)
   "breakingDescription": a short description if breaking is true, else null
 Be conservative: hedge or omit rather than assert a "why" you can't actually see in the diff.`;
 
+/**
+ * Parse a JSON object out of a model response that may be wrapped in
+ * ```json fences or padded with stray prose, despite the prompt asking for
+ * bare JSON. Falls back to the widest {...} span before giving up.
+ */
+function parseModelJson(text) {
+  const cleaned = String(text)
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const first = cleaned.indexOf('{');
+    const last = cleaned.lastIndexOf('}');
+    if (first !== -1 && last > first) {
+      return JSON.parse(cleaned.slice(first, last + 1));
+    }
+    throw new Error('model response was not parseable JSON');
+  }
+}
+
 async function anthropicDraft({ diff, stat, backend }) {
   const apiKey = backend.apiKey || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('headlessBackend.provider is "anthropic" but no apiKey is configured');
 
-  const model = backend.model || 'claude-3-5-haiku-latest';
+  const model = backend.model || 'claude-haiku-4-5';
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -101,7 +124,7 @@ async function anthropicDraft({ diff, stat, backend }) {
   }
   const data = await res.json();
   const text = (data.content || []).map((b) => b.text || '').join('');
-  return JSON.parse(text);
+  return parseModelJson(text);
 }
 
 async function ollamaDraft({ diff, stat, backend }) {
@@ -123,7 +146,7 @@ async function ollamaDraft({ diff, stat, backend }) {
     throw new Error(`ollama returned ${res.status}: ${await res.text()}`);
   }
   const data = await res.json();
-  return JSON.parse(data.response);
+  return parseModelJson(data.response);
 }
 
 /**
@@ -189,4 +212,4 @@ function draftToMessage(draftResult) {
   return format(draftResult);
 }
 
-module.exports = { draft, ruleBasedDraft, backendDraft, draftToMessage, ruleBasedTitle };
+module.exports = { draft, ruleBasedDraft, backendDraft, draftToMessage, ruleBasedTitle, parseModelJson };

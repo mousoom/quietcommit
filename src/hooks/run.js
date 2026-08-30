@@ -8,8 +8,9 @@ const quality = require('../quality');
 
 // git-authored message sources we should never touch — these already carry
 // meaning we didn't put there (a merge summary, a squash list, an amend of
-// an existing commit's own message).
-const PROTECTED_SOURCES = new Set(['merge', 'squash', 'commit']);
+// an existing commit's own message, or boilerplate from a user's
+// commit.template).
+const PROTECTED_SOURCES = new Set(['merge', 'squash', 'commit', 'template']);
 
 function statePath(cwd) {
   return path.join(git.gitDir(cwd), 'QUIETCOMMIT_STATE.json');

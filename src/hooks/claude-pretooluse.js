@@ -5,9 +5,12 @@ const git = require('../git');
 const draft = require('../draft');
 const quality = require('../quality');
 
-// Matches `git commit`, `git -C <dir> commit`, `git --no-pager commit`, etc.
-const GIT_COMMIT_RE = /\bgit\s+(?:-C\s+\S+\s+)?(?:--\S+\s+)*commit\b/;
-const MESSAGE_FLAG_RE = /(?:^|\s)(?:-m|--message)(?:=|\s+)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\S+)/g;
+// Matches `git commit` with any run of leading global options first:
+// `git -C <dir> commit`, `git -c key=val commit`, `git --no-pager commit`, etc.
+const GIT_COMMIT_RE = /\bgit\s+(?:(?:-[cC]\s+\S+|--\S+)\s+)*commit\b/;
+// `-m msg`, `-m  msg`, `-m=msg`, `-mmsg` (glued), `--message msg`, `--message=msg`.
+const MESSAGE_FLAG_RE =
+  /(?:^|\s)(?:-m|--message)(?:\s*=\s*|\s+|(?=\S))("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\S+)/g;
 const AMEND_RE = /\B--amend\b/;
 const NO_EDIT_RE = /\B--no-edit\b/;
 

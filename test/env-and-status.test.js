@@ -84,6 +84,23 @@ test('QUIETCOMMIT_DISABLE makes the prepare-commit-msg hook a no-op', () => {
   }
 });
 
+test('prepare-commit-msg leaves a commit.template message untouched', () => {
+  const dir = mkrepo();
+  try {
+    fs.writeFileSync(path.join(dir, 'a.txt'), 'x');
+    git(dir, 'add', '.');
+    const msgFile = path.join(dir, 'MSG');
+    const boilerplate = '\n# Please enter the commit message. Lines starting with #\n# are ignored.\n';
+    fs.writeFileSync(msgFile, boilerplate);
+
+    qc(dir, {}, 'hook-run', 'prepare-commit-msg', msgFile, 'template');
+
+    assert.equal(fs.readFileSync(msgFile, 'utf8'), boilerplate);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('without QUIETCOMMIT_DISABLE the same hook rewrites a low-signal message', () => {
   const dir = mkrepo();
   try {

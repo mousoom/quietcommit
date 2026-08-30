@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-30
+
+### Fixed
+
+- Claude Code gate: `git -c key=val commit …` and other global `-c` / `-C` options before
+  `commit` no longer bypass the `PreToolUse` check.
+- Claude Code gate: `-mMSG` (value glued to the flag) and `-m=MSG` are now recognised, so a valid
+  commit is no longer denied as "needs a -m message".
+- `prepare-commit-msg` no longer overwrites boilerplate from a user's `commit.template`
+  (`template` added to the protected message sources).
+- Opt-in AI drafting tolerates a model response wrapped in ```` ```json ```` fences or padded with
+  prose instead of falling back to the rule-based draft.
+- Default `headlessBackend` Anthropic model updated to `claude-haiku-4-5`.
+
 ## [0.1.0] - 2026-08-30
 
 Initial release.
@@ -43,5 +57,6 @@ Initial release.
 - Linked-worktree support: the hooks directory is resolved via `git rev-parse --git-path hooks`, so
   installs land where git actually executes hooks from.
 
-[Unreleased]: https://github.com/mousoom/quietcommit/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mousoom/quietcommit/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/mousoom/quietcommit/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mousoom/quietcommit/releases/tag/v0.1.0

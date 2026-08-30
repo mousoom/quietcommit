@@ -2,7 +2,25 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { ruleBasedTitle } = require('../src/draft');
+const { ruleBasedTitle, parseModelJson } = require('../src/draft');
+
+test('parseModelJson reads bare JSON', () => {
+  assert.deepEqual(parseModelJson('{"type":"feat","title":"x"}'), { type: 'feat', title: 'x' });
+});
+
+test('parseModelJson strips ```json fences', () => {
+  const wrapped = '```json\n{"type":"fix","title":"y"}\n```';
+  assert.deepEqual(parseModelJson(wrapped), { type: 'fix', title: 'y' });
+});
+
+test('parseModelJson recovers an object from surrounding prose', () => {
+  const noisy = 'Here is the commit:\n{"type":"docs","title":"z"}\nHope that helps!';
+  assert.deepEqual(parseModelJson(noisy), { type: 'docs', title: 'z' });
+});
+
+test('parseModelJson throws a clear error when there is no object', () => {
+  assert.throws(() => parseModelJson('sorry, I cannot help'), /not parseable JSON/);
+});
 
 test('ruleBasedTitle for a single added file', () => {
   const title = ruleBasedTitle([{ status: 'A', path: 'src/widgets/button.js' }], 'src');
