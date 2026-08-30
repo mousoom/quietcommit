@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-30
+
+### Changed
+
+- Release pipeline now publishes through npm OIDC Trusted Publishing instead of a stored
+  `NPM_TOKEN` — no long-lived credential, no 2FA prompt in CI. No functional change to the package.
+
 ## [0.1.1] - 2026-08-30
 
 ### Fixed
@@ -57,6 +64,7 @@ Initial release.
 - Linked-worktree support: the hooks directory is resolved via `git rev-parse --git-path hooks`, so
   installs land where git actually executes hooks from.
 
-[Unreleased]: https://github.com/mousoom/quietcommit/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/mousoom/quietcommit/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/mousoom/quietcommit/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/mousoom/quietcommit/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mousoom/quietcommit/releases/tag/v0.1.0
