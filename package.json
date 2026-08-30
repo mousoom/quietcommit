@@ -1,6 +1,6 @@
 {
   "name": "quietcommit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Writes properly-formatted, detailed commit messages automatically — for AI coding agents and humans, no approval required by default, no API key for the common case.",
   "license": "MIT",
   "author": "Mousoom <mousoom.personal@gmail.com>",
