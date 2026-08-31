@@ -11,6 +11,12 @@ All notable changes to this project are documented here. The format is based on
 - Contributor scaffolding: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue / PR templates,
   Dependabot config. CI workflow pinned to least-privilege (`contents: read`).
 
+### Changed
+
+- Slimmed the README to a ~1-minute read (quickstart first, 3-bullet "how it works"). Moved the
+  full per-commit walkthrough to `docs/behavior.md` and the config reference to
+  `docs/configuration.md`. No behaviour change.
+
 ## [0.1.2] - 2026-08-30
 
 ### Changed
