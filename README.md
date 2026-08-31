@@ -28,11 +28,23 @@ npm install -g quietcommit    # or add as a devDependency
 
 cd your-repo
 quietcommit install           # git hooks for this repo
-quietcommit install --all     # + Claude Code / AGENTS.md / Cursor / Copilot integrations
+quietcommit install --all     # + every agent integration below
 ```
 
-That's it. Commits are handled silently from now on. `quietcommit uninstall` removes exactly what
-was installed and restores any hook that was there before.
+`install` always sets up the git hooks. Add integrations on top — individually or combined
+(`--claude-code --cursor`):
+
+```sh
+quietcommit install --claude-code   # PreToolUse gate before `git commit` runs + /quietcommit skill
+quietcommit install --agents-md     # AGENTS.md block — Codex, Aider, OpenCode, 20+ others
+quietcommit install --cursor        # .cursor/rules/quietcommit.mdc
+quietcommit install --copilot       # .github/copilot-instructions.md
+
+quietcommit install --global        # git hooks for every repo on this machine (core.hooksPath)
+```
+
+That's it. Commits are handled silently from now on. `quietcommit uninstall` (same flags) removes
+exactly what was installed and restores any hook that was there before.
 
 ## How it works
 
