@@ -15,7 +15,17 @@ const claudePreToolUse = require('./hooks/claude-pretooluse');
 const claudeCode = require('./integrations/claude-code');
 const agentsMd = require('./integrations/agents-md');
 const editorRules = require('./integrations/editor-rules');
+const gitExclude = require('./git-exclude');
 const pkg = require('../package.json');
+
+// Repo-root-relative paths each integration writes into the working tree —
+// used by `install --local-only` to keep them out of a shared branch.
+const LOCAL_ONLY_PATHS = {
+  claudeCode: ['.claude/settings.json', '.claude/hooks/quietcommit-pretooluse.sh', '.claude/skills/quietcommit/'],
+  agentsMd: ['AGENTS.md'],
+  cursor: ['.cursor/rules/quietcommit.mdc'],
+  copilot: ['.github/copilot-instructions.md'],
+};
 
 function fail(message) {
   process.stderr.write(chalk.red(`quietcommit: ${message}\n`));
@@ -101,8 +111,10 @@ function buildProgram() {
     .option('--cursor', 'also write/update .cursor/rules/quietcommit.mdc')
     .option('--copilot', 'also write/update .github/copilot-instructions.md')
     .option('--all', 'install hooks + every agent integration (Claude Code, AGENTS.md, Cursor, Copilot)')
+    .option('--local-only', 'also add the agent-integration files to .git/info/exclude so they are never committed or pushed')
     .action((opts) => {
       const cwd = process.cwd();
+      const installed = []; // integration keys actually installed this run
 
       try {
         if (opts.global) {
@@ -121,6 +133,7 @@ function buildProgram() {
           const { settingsPath, skillPath } = claudeCode.installClaudeCode(root);
           process.stdout.write(chalk.green(`Registered Claude Code PreToolUse hook in ${settingsPath}\n`));
           if (skillPath) process.stdout.write(chalk.green(`Installed /quietcommit skill: ${skillPath}\n`));
+          installed.push('claudeCode');
         }
 
         if (opts.agentsMd || opts.all) {
@@ -128,6 +141,7 @@ function buildProgram() {
           const config = loadConfig({ repoRoot: root });
           const { filePath, action } = agentsMd.installAgentsMd(root, config);
           process.stdout.write(chalk.green(`AGENTS.md ${action}: ${filePath}\n`));
+          installed.push('agentsMd');
         }
 
         if (opts.cursor || opts.all) {
@@ -135,6 +149,7 @@ function buildProgram() {
           const config = loadConfig({ repoRoot: root });
           const { filePath, action } = editorRules.installCursor(root, config);
           process.stdout.write(chalk.green(`Cursor rule ${action}: ${filePath}\n`));
+          installed.push('cursor');
         }
 
         if (opts.copilot || opts.all) {
@@ -142,6 +157,23 @@ function buildProgram() {
           const config = loadConfig({ repoRoot: root });
           const { filePath, action } = editorRules.installCopilot(root, config);
           process.stdout.write(chalk.green(`Copilot instructions ${action}: ${filePath}\n`));
+          installed.push('copilot');
+        }
+
+        if (opts.localOnly) {
+          if (opts.global) {
+            process.stdout.write(chalk.yellow('--local-only ignored: --global installs no working-tree files\n'));
+          } else {
+            const paths = [...new Set(installed.flatMap((k) => LOCAL_ONLY_PATHS[k] || []))];
+            if (paths.length === 0) {
+              process.stdout.write(
+                chalk.yellow('--local-only had nothing to exclude — pass it alongside an integration flag (e.g. --claude-code)\n')
+              );
+            } else {
+              const { excludePath, action } = gitExclude.applyLocalExclude(cwd, paths);
+              process.stdout.write(chalk.green(`.git/info/exclude ${action} (${paths.length} path(s)): ${excludePath}\n`));
+            }
+          }
         }
 
         if (!fs.existsSync(path.join(repoRootOrCwd(cwd), CONFIG_FILENAME)) && !opts.global) {
@@ -191,6 +223,13 @@ function buildProgram() {
           const root = repoRootOrCwd(cwd);
           const r = editorRules.uninstallCopilot(root);
           process.stdout.write(chalk.green(`Copilot instructions: ${r.action}\n`));
+        }
+
+        if (!opts.global) {
+          const r = gitExclude.removeLocalExclude(cwd);
+          if (r.action === 'removed') {
+            process.stdout.write(chalk.green(`.git/info/exclude: quietcommit block removed\n`));
+          }
         }
       } catch (err) {
         fail(err.message);
@@ -282,6 +321,11 @@ function buildProgram() {
 
         const cop = editorRules.copilotStatus(root);
         lines.push(`  Copilot block:    ${cop.present ? chalk.green('present') : chalk.dim('absent')}`);
+
+        const ex = gitExclude.localExcludeStatus(cwd);
+        lines.push(
+          `  local-only exclude: ${ex.applied ? chalk.green(`on (${ex.paths.length} path(s) in .git/info/exclude)`) : chalk.dim('off')}`
+        );
       }
 
       lines.push('');
