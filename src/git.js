@@ -125,6 +125,17 @@ function hooksPath(cwd = process.cwd()) {
   return commonHooksDir(cwd);
 }
 
+/**
+ * Absolute path to `.git/info/exclude` — the per-clone ignore file that is
+ * never committed or shared. Worktree-safe via `git rev-parse --git-path`.
+ */
+function infoExcludePath(cwd = process.cwd()) {
+  const abs = run(['rev-parse', '--path-format=absolute', '--git-path', 'info/exclude'], { cwd });
+  if (abs.status === 0 && abs.stdout.trim()) return abs.stdout.trim();
+  const rel = runOrThrow(['rev-parse', '--git-path', 'info/exclude'], { cwd });
+  return path.resolve(cwd, rel);
+}
+
 module.exports = {
   run,
   runOrThrow,
@@ -140,4 +151,5 @@ module.exports = {
   configGetAll,
   hooksPath,
   commonHooksDir,
+  infoExcludePath,
 };

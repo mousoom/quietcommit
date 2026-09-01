@@ -43,6 +43,16 @@ quietcommit install --copilot       # .github/copilot-instructions.md
 quietcommit install --global        # git hooks for every repo on this machine (core.hooksPath)
 ```
 
+Working in someone else's / a company repo and don't want the integration files in a shared
+branch? Add `--local-only` — it lists them in `.git/info/exclude` (per-clone, never pushed, and
+your team's `.gitignore` is untouched):
+
+```sh
+quietcommit install --claude-code --local-only
+```
+
+The git hooks live in `.git/` and can never be committed regardless.
+
 That's it. Commits are handled silently from now on. `quietcommit uninstall` (same flags) removes
 exactly what was installed and restores any hook that was there before.
 

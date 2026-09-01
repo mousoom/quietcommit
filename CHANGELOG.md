@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- `install --local-only` — lists the agent-integration files it writes
+  (`.claude/…`, `AGENTS.md`, `.cursor/…`, `.github/copilot-instructions.md`) in
+  `.git/info/exclude` so they work locally but never land in a shared branch. The team's
+  `.gitignore` is not touched. `uninstall` removes the block; `status` reports it.
 - Contributor scaffolding: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue / PR templates,
   Dependabot config. CI workflow pinned to least-privilege (`contents: read`).
 
